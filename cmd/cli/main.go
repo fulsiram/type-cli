@@ -37,16 +37,6 @@ type model struct {
 	renderedWords []string
 }
 
-// func generateLines(words []string, n int) [][]string {
-// 	var lines [][]string
-//
-// 	for range n {
-// 		lines = append(lines, generateRandomLine(words))
-// 	}
-//
-// 	return lines
-// }
-
 func generateWords(wordlist []string, n int) []string {
 	var words []string
 
