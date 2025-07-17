@@ -28,22 +28,31 @@ type model struct {
 	width  int
 	height int
 
-	words           []string
-	lines           [][]string
-	typedLines      [][]string
-	currentLine     int
-	currentLineWord int
-	currentCharId   int
+	wordlist      []string
+	words         []string
+	typedWords    [][]string
+	currentWord   int
+	currentCharId int
 }
 
-func generateLines(words []string, n int) [][]string {
-	var lines [][]string
+// func generateLines(words []string, n int) [][]string {
+// 	var lines [][]string
+//
+// 	for range n {
+// 		lines = append(lines, generateRandomLine(words))
+// 	}
+//
+// 	return lines
+// }
+
+func generateWords(wordlist []string, n int) []string {
+	var words []string
 
 	for range n {
-		lines = append(lines, generateRandomLine(words))
+		words = append(words, wordlist[rand.Intn(len(wordlist))])
 	}
 
-	return lines
+	return words
 }
 
 func initialModel(words []string) model {
@@ -61,8 +70,8 @@ func initialModel(words []string) model {
 				key.WithKeys("backspace"),
 			),
 		},
-		words: words,
-		lines: generateLines(words, 10),
+		wordlist: words,
+		words:    generateWords(words, 100),
 	}
 }
 
@@ -99,34 +108,76 @@ func (m model) View() string {
 		Align(lipgloss.Center).
 		Render("Type CLI")
 
-	toTypeStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#646669"))
-
-	lineText := ""
-	for _, line := range m.lines[:3] {
-		lineText += strings.Join(line, " ") + "\n"
-	}
-
 	content := lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height-2).
 		Align(lipgloss.Center, lipgloss.Center).
-		Render(toTypeStyle.Render(lineText))
+		Render(m.renderLines())
 
 	return lipgloss.JoinVertical(lipgloss.Top, header, content)
 }
 
-func generateRandomLine(words []string) []string {
-	totalChars := 0
-	selectedWords := []string{}
+func (m model) renderLines() string {
+	untypedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#646669"))
 
-	for totalChars < 80 {
-		selectedWord := words[rand.Intn(len(words))]
-		totalChars += len(selectedWord)
-		selectedWords = append(selectedWords, selectedWord)
+	lines := m.getLines()
+	currentLine := m.getCurrentLine()
+
+	// fmt.Printf("%v\n%v", lines, currentLine)
+
+	var shownLines [][]string
+	if currentLine == 0 {
+		shownLines = lines[:3]
+	} else if currentLine >= len(lines)-3 {
+		shownLines = lines[len(lines)-3:]
+	} else {
+		shownLines = lines[currentLine-1 : currentLine+1]
 	}
 
-	return selectedWords
+	var joinedLines []string
+	for _, line := range shownLines {
+		renderedLines = append(renderedLines, untypedStyle.Render(strings.Join(line, " ")))
+	}
+
+	return strings.Join(renderedLines, "\n")
+}
+
+func (m model) getLines() [][]string {
+	charCount := 0
+	var lines [][]string
+	var words []string
+
+	for _, word := range m.words {
+		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
+		if charCount+len(word) > 60 {
+			lines = append(lines, words)
+			charCount = 0
+			words = []string{}
+		}
+
+		charCount += len(word)
+		words = append(words, word)
+	}
+
+	if len(words) > 0 {
+		lines = append(lines, words)
+	}
+
+	return lines
+}
+
+func (m model) getCurrentLine() int {
+	charCount := 0
+
+	for i, word := range m.words {
+		charCount += len(word)
+
+		if i == m.currentWord {
+			return charCount / 60
+		}
+	}
+	panic("shouldn't be reachable")
 }
 
 func (m model) Init() tea.Cmd {
@@ -143,7 +194,7 @@ func main() {
 	var words []string
 	json.Unmarshal(file, &words)
 
-	fmt.Printf("words: %v", words)
+	// fmt.Printf("words: %v", words)
 
 	p := tea.NewProgram(initialModel(words))
 	if _, err := p.Run(); err != nil {
