@@ -98,7 +98,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+			m.typedWords = append(m.typedWords, "")
+			m.currentWord += 1
+
 		default:
+			m.currentCharId += 1
 			m.typedWords[m.currentWord] += msg.String()
 			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 		}
