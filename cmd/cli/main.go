@@ -30,9 +30,11 @@ type model struct {
 
 	wordlist      []string
 	words         []string
-	typedWords    [][]string
+	typedWords    []string
 	currentWord   int
 	currentCharId int
+
+	renderedWords []string
 }
 
 // func generateLines(words []string, n int) [][]string {
@@ -56,7 +58,7 @@ func generateWords(wordlist []string, n int) []string {
 }
 
 func initialModel(words []string) model {
-	return model{
+	m := model{
 		timer: timer.NewWithInterval(30*time.Second, time.Second),
 		keymap: keymap{
 			quit: key.NewBinding(
@@ -70,9 +72,14 @@ func initialModel(words []string) model {
 				key.WithKeys("backspace"),
 			),
 		},
-		wordlist: words,
-		words:    generateWords(words, 100),
+		wordlist:   words,
+		words:      generateWords(words, 100),
+		typedWords: []string{""},
 	}
+
+	m.renderedWords = m.renderWords()
+
+	return m
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -92,7 +99,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		default:
-
+			m.typedWords[m.currentWord] += msg.String()
+			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -118,10 +126,10 @@ func (m model) View() string {
 }
 
 func (m model) renderLines() string {
-	untypedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#646669"))
-
-	lines := m.getLines()
+	// untypedStyle := lipgloss.NewStyle().
+	// 	Foreground(lipgloss.Color("#646669"))
+	//
+	lines := m.getRenderedLines()
 	currentLine := m.getCurrentLine()
 
 	// fmt.Printf("%v\n%v", lines, currentLine)
@@ -135,12 +143,56 @@ func (m model) renderLines() string {
 		shownLines = lines[currentLine-1 : currentLine+1]
 	}
 
-	var joinedLines []string
+	var renderedLines []string
 	for _, line := range shownLines {
-		renderedLines = append(renderedLines, untypedStyle.Render(strings.Join(line, " ")))
+		renderedLines = append(renderedLines, strings.Join(line, " "))
 	}
 
 	return strings.Join(renderedLines, "\n")
+}
+
+func (m model) renderWord(typedWord string, fullWord string) string {
+	untypedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#646669"))
+
+	correctLetterStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFFF"))
+
+	incorrectLetterStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#DB4B4C"))
+
+	renderedWord := ""
+	for i := range typedWord {
+		if i >= len(fullWord) {
+			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+		} else if fullWord[i] == typedWord[i] {
+			renderedWord += correctLetterStyle.Render(string(typedWord[i]))
+		} else {
+			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+		}
+	}
+
+	if len(typedWord) < len(fullWord) {
+		renderedWord += untypedStyle.Render(fullWord[len(typedWord):])
+	}
+
+	return renderedWord
+}
+
+func (m model) renderWords() []string {
+	var renderedWords []string
+
+	for i, word := range m.words {
+		if i < len(m.typedWords) {
+			typedWord := m.typedWords[i]
+
+			renderedWords = append(renderedWords, m.renderWord(typedWord, word))
+		} else {
+			renderedWords = append(renderedWords, m.renderWord("", word))
+		}
+	}
+
+	return renderedWords
 }
 
 func (m model) getLines() [][]string {
@@ -148,7 +200,7 @@ func (m model) getLines() [][]string {
 	var lines [][]string
 	var words []string
 
-	for _, word := range m.words {
+	for _, word := range m.typedWords {
 		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
 		if charCount+len(word) > 60 {
 			lines = append(lines, words)
@@ -158,6 +210,30 @@ func (m model) getLines() [][]string {
 
 		charCount += len(word)
 		words = append(words, word)
+	}
+
+	if len(words) > 0 {
+		lines = append(lines, words)
+	}
+
+	return lines
+}
+
+func (m model) getRenderedLines() [][]string {
+	charCount := 0
+	var lines [][]string
+	var words []string
+
+	for i, word := range m.words {
+		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
+		if charCount+len(word) > 60 {
+			lines = append(lines, words)
+			charCount = 0
+			words = []string{}
+		}
+
+		charCount += len(word)
+		words = append(words, m.renderedWords[i])
 	}
 
 	if len(words) > 0 {
