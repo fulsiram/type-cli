@@ -100,6 +100,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.typedWords = append(m.typedWords, "")
 			m.currentWord += 1
+			m.currentCharId = 0
+
+		case key.Matches(msg, m.keymap.backSpace):
+			if m.currentCharId == 0 {
+				if m.currentWord > 0 {
+					m.typedWords = m.typedWords[:m.currentWord]
+					m.currentWord -= 1
+					m.currentCharId = len(m.typedWords[m.currentWord])
+				}
+				return m, nil
+			}
+
+			m.currentCharId -= 1
+			m.typedWords[m.currentWord] = m.typedWords[m.currentWord][:m.currentCharId]
+			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 
 		default:
 			m.currentCharId += 1
@@ -144,7 +159,7 @@ func (m model) renderLines() string {
 	} else if currentLine >= len(lines)-3 {
 		shownLines = lines[len(lines)-3:]
 	} else {
-		shownLines = lines[currentLine-1 : currentLine+1]
+		shownLines = lines[currentLine-1 : currentLine+2]
 	}
 
 	var renderedLines []string
