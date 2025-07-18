@@ -323,48 +323,6 @@ func (m model) renderWords() []string {
 	return renderedWords
 }
 
-// func (m model) getRenderVdLines() []string {
-// 	charCount := 0
-// 	var lines []string
-// 	var words []string
-//
-// 	for i, word := range m.words {
-// 		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
-// 		if charCount+len(word) > 60 {
-// 			line := ""
-// 			for _, w := words {
-//
-// 			}
-//
-// 			lines = append(lines, words)
-// 			charCount = 0
-// 			words = []string{}
-// 		}
-//
-// 		charCount += len(word)
-// 		words = append(words, m.renderedWords[i])
-// 	}
-//
-// 	if len(words) > 0 {
-// 		lines = append(lines, words)
-// 	}
-//
-// 	return lines
-// }
-
-func (m model) getCurrentLine() int {
-	charCount := 0
-
-	for i, word := range m.words {
-		charCount += len(word)
-
-		if i == m.currentWord {
-			return charCount / 60
-		}
-	}
-	panic("shouldn't be reachable")
-}
-
 func (m model) Init() tea.Cmd {
 	return tea.Batch(m.timer.Init(), cursor.Blink)
 }
