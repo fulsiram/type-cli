@@ -40,6 +40,7 @@ type model struct {
 
 	testStarted         bool
 	testStartedAt       time.Time
+	testFinishedAt      time.Time
 	charactersTyped     int
 	correctCharsTyped   int
 	incorrectCharsTyped int
@@ -57,7 +58,7 @@ func generateWords(wordlist []string, n int) []string {
 
 func initialModel(words []string) model {
 	m := model{
-		timer:  timer.NewWithInterval(30*time.Second, time.Second),
+		timer:  timer.NewWithInterval(10*time.Second, time.Second),
 		cursor: cursor.New(),
 
 		keymap: keymap{
@@ -98,11 +99,18 @@ func initialModel(words []string) model {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
-	case timer.TickMsg:
-		var cmd tea.Cmd
+	case timer.TickMsg, timer.StartStopMsg:
 		m.timer, cmd = m.timer.Update(msg)
-		return m, cmd
+		cmds = append(cmds, cmd)
+
+		if m.testStarted && m.timer.Timedout() {
+			m.testFinishedAt = time.Now()
+			m.testStarted = false
+		}
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keymap.quit):
@@ -134,9 +142,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.renderedWords[m.currentWord] = m.renderCurrentWord()
 		default:
+			if m.timer.Timedout() {
+				break
+			}
+
 			if !m.testStarted {
 				m.testStarted = true
 				m.testStartedAt = time.Now()
+				m.charactersTyped = 0
+				m.incorrectCharsTyped = 0
+				m.correctCharsTyped = 0
+				cmds = append(cmds, m.timer.Start())
 			}
 
 			if len(m.typedWords[m.currentWord]) > len(m.words[m.currentWord])+15 {
@@ -162,11 +178,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	}
 
-	var cmd tea.Cmd
 	m.cursor, cmd = m.cursor.Update(msg)
+	cmds = append(cmds, cmd)
 
 	m.renderedWords[m.currentWord] = m.renderCurrentWord()
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) View() string {
@@ -176,20 +192,31 @@ func (m model) View() string {
 		Align(lipgloss.Center).
 		Render(
 			"Type CLI",
+			fmt.Sprintf("%s", m.timer.View()),
 			fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5),
 			fmt.Sprintf("%.0f", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
 		)
 
-	content := lipgloss.NewStyle().
+	contentStyle := lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height-2).
-		Align(lipgloss.Center, lipgloss.Center).
-		Render(
+		Align(lipgloss.Center, lipgloss.Center)
+
+	content := ""
+	if !m.timer.Timedout() {
+		content = contentStyle.Render(
 			lipgloss.NewStyle().
 				Width(60).
 				Align(lipgloss.Left).
 				Render(m.renderLines()),
 		)
+	} else {
+		content = contentStyle.Render(
+			fmt.Sprintf("%.2f wpm\n", float64(m.charactersTyped)/m.testFinishedAt.Sub(m.testStartedAt).Minutes()/5),
+			fmt.Sprintf("%.0f%% accuracy\n", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
+			fmt.Sprintf("%.0f sec", m.testFinishedAt.Sub(m.testStartedAt).Seconds()),
+		)
+	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, header, content)
 }
@@ -316,7 +343,7 @@ func (m model) renderWords() []string {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(m.timer.Init(), cursor.Blink)
+	return tea.Batch(cursor.Blink)
 }
 
 func main() {
