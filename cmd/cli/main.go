@@ -195,14 +195,6 @@ func (m model) View() string {
 }
 
 func (m model) renderLines() string {
-	// untypedStyle := lipgloss.NewStyle().
-	// 	Foreground(lipgloss.Color("#646669"))
-	//
-	// lines := m.getRenderedLines()
-	// currentLine := m.getCurrentLine()
-
-	// fmt.Printf("%v\n%v", lines, currentLine)
-
 	var lines []string
 	line := ""
 	lineLenght := 0
