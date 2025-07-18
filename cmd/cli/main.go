@@ -114,6 +114,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.currentWord += 1
 			m.currentCharId = 0
+			m.charactersTyped++
 
 		case key.Matches(msg, m.keymap.backSpace):
 			if m.currentCharId == 0 {
