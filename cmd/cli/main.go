@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,6 +23,7 @@ type keymap struct {
 
 type model struct {
 	timer    timer.Model
+	cursor   cursor.Model
 	keymap   keymap
 	quitting bool
 
@@ -49,7 +51,8 @@ func generateWords(wordlist []string, n int) []string {
 
 func initialModel(words []string) model {
 	m := model{
-		timer: timer.NewWithInterval(30*time.Second, time.Second),
+		timer:  timer.NewWithInterval(30*time.Second, time.Second),
+		cursor: cursor.New(),
 		keymap: keymap{
 			quit: key.NewBinding(
 				key.WithKeys("q", "ctrl+c"),
@@ -64,8 +67,20 @@ func initialModel(words []string) model {
 		},
 		wordlist:   words,
 		words:      generateWords(words, 100),
-		typedWords: []string{""},
+		typedWords: make([]string, 100),
 	}
+
+	m.cursor.SetChar("a")
+	m.cursor.SetMode(cursor.CursorStatic)
+	// m.cursor.Style = lipgloss.NewStyle().
+	// 	Background(lipgloss.Color("#FFFFFF"))
+	// Foreground(lipgloss.Color("#000000")).
+	// Bold(true)
+
+	// m.cursor.Style = lipgloss.NewStyle().
+	// 	Border(lipgloss.BlockBorder())
+
+	m.cursor.Focus()
 
 	m.renderedWords = m.renderWords()
 
@@ -88,7 +103,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			m.typedWords = append(m.typedWords, "")
 			m.currentWord += 1
 			m.currentCharId = 0
 
@@ -104,18 +118,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.currentCharId -= 1
 			m.typedWords[m.currentWord] = m.typedWords[m.currentWord][:m.currentCharId]
-			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
-
+			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
+			m.renderedWords[m.currentWord] = m.renderCurrentWord()
 		default:
 			m.currentCharId += 1
 			m.typedWords[m.currentWord] += msg.String()
-			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
+			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
+			m.renderedWords[m.currentWord] = m.renderCurrentWord()
+
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 	}
-	return m, nil
+
+	var cmd tea.Cmd
+	m.cursor, cmd = m.cursor.Update(msg)
+
+	m.cursor.SetChar(string(m.words[m.currentWord][m.currentCharId]))
+	m.renderedWords[m.currentWord] = m.renderCurrentWord()
+	return m, cmd
 }
 
 func (m model) View() string {
@@ -123,7 +145,7 @@ func (m model) View() string {
 		MarginTop(1).
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render("Type CLI")
+		Render(m.timer.View() + m.cursor.View() + "Type CLI")
 
 	content := lipgloss.NewStyle().
 		Width(m.width).
@@ -158,6 +180,38 @@ func (m model) renderLines() string {
 	}
 
 	return strings.Join(renderedLines, "\n")
+}
+
+func (m model) renderCurrentWord() string {
+	untypedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#646669"))
+
+	correctLetterStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFFF"))
+
+	incorrectLetterStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#DB4B4C"))
+
+	currentWord := m.words[m.currentWord]
+	typedWord := m.typedWords[m.currentWord]
+
+	renderedWord := ""
+	for i := range typedWord {
+		if i >= len(currentWord) {
+			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+		} else if currentWord[i] == typedWord[i] {
+			renderedWord += correctLetterStyle.Render(string(typedWord[i]))
+		} else {
+			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+		}
+	}
+
+	if len(typedWord) < len(currentWord) {
+		renderedWord += untypedStyle.Render(m.cursor.View())
+		renderedWord += untypedStyle.Render(currentWord[len(typedWord)+1:])
+	}
+
+	return renderedWord
 }
 
 func (m model) renderWord(typedWord string, fullWord string) string {
@@ -242,7 +296,7 @@ func (m model) getCurrentLine() int {
 }
 
 func (m model) Init() tea.Cmd {
-	return m.timer.Init()
+	return tea.Batch(m.timer.Init(), cursor.Blink)
 }
 
 func main() {
