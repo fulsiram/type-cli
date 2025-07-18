@@ -124,10 +124,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.renderedWords[m.currentWord] = m.renderCurrentWord()
 		default:
 			m.currentCharId += 1
+			if len(m.typedWords[m.currentWord]) > len(m.words[m.currentWord])+15 {
+				break
+			}
 			m.typedWords[m.currentWord] += msg.String()
 			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.renderedWords[m.currentWord] = m.renderCurrentWord()
-
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -176,13 +178,15 @@ func (m model) renderLines() string {
 	currentLine := 0
 	for i, word := range m.words {
 		// TODO: Account for spaces
-		if len(word)+lineLenght+1 > 60 {
+		wordLength := max(len(word), len(m.typedWords[i]))
+
+		if wordLength+lineLenght+1 > 60 {
 			lines = append(lines, line)
 			line = ""
 			lineLenght = 0
 		}
 
-		lineLenght += len(word) + 1
+		lineLenght += wordLength + 1
 
 		if i == m.currentWord {
 			currentLine = len(lines)
@@ -208,7 +212,7 @@ func (m model) renderLines() string {
 		shownLines = lines[currentLine-1 : currentLine+2]
 	}
 
-	return strings.Join(shownLines, "")
+	return strings.Join(shownLines, "\n")
 }
 
 func (m model) renderCurrentWord() string {
