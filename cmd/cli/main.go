@@ -71,7 +71,7 @@ func initialModel(words []string) model {
 	}
 
 	m.cursor.SetChar("a")
-	m.cursor.SetMode(cursor.CursorBlink)
+	m.cursor.SetMode(cursor.CursorStatic)
 	m.cursor.Style = lipgloss.NewStyle().
 		Background(lipgloss.Color("#000000")).
 		Foreground(lipgloss.Color("#FFFFFF"))
@@ -156,6 +156,7 @@ func (m model) View() string {
 		Align(lipgloss.Center, lipgloss.Center).
 		Render(
 			lipgloss.NewStyle().
+				Width(60).
 				Align(lipgloss.Left).
 				Render(m.renderLines()),
 		)
