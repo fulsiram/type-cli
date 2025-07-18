@@ -71,10 +71,10 @@ func initialModel(words []string) model {
 	}
 
 	m.cursor.SetChar("a")
-	m.cursor.SetMode(cursor.CursorStatic)
-	// m.cursor.Style = lipgloss.NewStyle().
-	// 	Background(lipgloss.Color("#FFFFFF"))
-	// Foreground(lipgloss.Color("#000000")).
+	m.cursor.SetMode(cursor.CursorBlink)
+	m.cursor.Style = lipgloss.NewStyle().
+		Background(lipgloss.Color("#000000")).
+		Foreground(lipgloss.Color("#FFFFFF"))
 	// Bold(true)
 
 	// m.cursor.Style = lipgloss.NewStyle().
@@ -103,13 +103,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.currentWord += 1
 			m.currentCharId = 0
 
 		case key.Matches(msg, m.keymap.backSpace):
 			if m.currentCharId == 0 {
 				if m.currentWord > 0 {
-					m.typedWords = m.typedWords[:m.currentWord]
+					// m.typedWords = m.typedWords[:m.currentWord]
+					m.renderedWords[m.currentWord] = m.renderWord("", m.words[m.currentWord])
 					m.currentWord -= 1
 					m.currentCharId = len(m.typedWords[m.currentWord])
 				}
@@ -135,7 +137,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.cursor, cmd = m.cursor.Update(msg)
 
-	m.cursor.SetChar(string(m.words[m.currentWord][m.currentCharId]))
 	m.renderedWords[m.currentWord] = m.renderCurrentWord()
 	return m, cmd
 }
@@ -145,13 +146,17 @@ func (m model) View() string {
 		MarginTop(1).
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render(m.timer.View() + m.cursor.View() + "Type CLI")
+		Render("Type CLI")
 
 	content := lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height-2).
 		Align(lipgloss.Center, lipgloss.Center).
-		Render(m.renderLines())
+		Render(
+			lipgloss.NewStyle().
+				Align(lipgloss.Left).
+				Render(m.renderLines()),
+		)
 
 	return lipgloss.JoinVertical(lipgloss.Top, header, content)
 }
@@ -160,12 +165,41 @@ func (m model) renderLines() string {
 	// untypedStyle := lipgloss.NewStyle().
 	// 	Foreground(lipgloss.Color("#646669"))
 	//
-	lines := m.getRenderedLines()
-	currentLine := m.getCurrentLine()
+	// lines := m.getRenderedLines()
+	// currentLine := m.getCurrentLine()
 
 	// fmt.Printf("%v\n%v", lines, currentLine)
 
-	var shownLines [][]string
+	var lines []string
+	line := ""
+	lineLenght := 0
+	currentLine := 0
+	for i, word := range m.words {
+		// TODO: Account for spaces
+		if len(word)+lineLenght+1 > 60 {
+			lines = append(lines, line)
+			line = ""
+			lineLenght = 0
+		}
+
+		lineLenght += len(word) + 1
+
+		if i == m.currentWord {
+			currentLine = len(lines)
+			m.renderedWords[i] = m.renderCurrentWord()
+		}
+
+		line += m.renderedWords[i]
+
+		if i == m.currentWord && len(m.typedWords[i]) >= len(word) {
+			m.cursor.SetChar(" ")
+			line += m.cursor.View()
+		} else {
+			line += " "
+		}
+	}
+
+	var shownLines []string
 	if currentLine == 0 {
 		shownLines = lines[:3]
 	} else if currentLine >= len(lines)-3 {
@@ -174,12 +208,7 @@ func (m model) renderLines() string {
 		shownLines = lines[currentLine-1 : currentLine+2]
 	}
 
-	var renderedLines []string
-	for _, line := range shownLines {
-		renderedLines = append(renderedLines, strings.Join(line, " "))
-	}
-
-	return strings.Join(renderedLines, "\n")
+	return strings.Join(shownLines, "")
 }
 
 func (m model) renderCurrentWord() string {
@@ -207,6 +236,7 @@ func (m model) renderCurrentWord() string {
 	}
 
 	if len(typedWord) < len(currentWord) {
+		m.cursor.SetChar(string(currentWord[m.currentCharId]))
 		renderedWord += untypedStyle.Render(m.cursor.View())
 		renderedWord += untypedStyle.Render(currentWord[len(typedWord)+1:])
 	}
@@ -258,29 +288,34 @@ func (m model) renderWords() []string {
 	return renderedWords
 }
 
-func (m model) getRenderedLines() [][]string {
-	charCount := 0
-	var lines [][]string
-	var words []string
-
-	for i, word := range m.words {
-		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
-		if charCount+len(word) > 60 {
-			lines = append(lines, words)
-			charCount = 0
-			words = []string{}
-		}
-
-		charCount += len(word)
-		words = append(words, m.renderedWords[i])
-	}
-
-	if len(words) > 0 {
-		lines = append(lines, words)
-	}
-
-	return lines
-}
+// func (m model) getRenderVdLines() []string {
+// 	charCount := 0
+// 	var lines []string
+// 	var words []string
+//
+// 	for i, word := range m.words {
+// 		// fmt.Printf("%s %d %d %d\n\n", word, len(word), charCount, len(words))
+// 		if charCount+len(word) > 60 {
+// 			line := ""
+// 			for _, w := words {
+//
+// 			}
+//
+// 			lines = append(lines, words)
+// 			charCount = 0
+// 			words = []string{}
+// 		}
+//
+// 		charCount += len(word)
+// 		words = append(words, m.renderedWords[i])
+// 	}
+//
+// 	if len(words) > 0 {
+// 		lines = append(lines, words)
+// 	}
+//
+// 	return lines
+// }
 
 func (m model) getCurrentLine() int {
 	charCount := 0
