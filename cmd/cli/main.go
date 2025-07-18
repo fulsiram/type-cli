@@ -37,6 +37,10 @@ type model struct {
 	currentCharId int
 
 	renderedWords []string
+
+	testStarted     bool
+	testStartedAt   time.Time
+	charactersTyped int
 }
 
 func generateWords(wordlist []string, n int) []string {
@@ -53,6 +57,7 @@ func initialModel(words []string) model {
 	m := model{
 		timer:  timer.NewWithInterval(30*time.Second, time.Second),
 		cursor: cursor.New(),
+
 		keymap: keymap{
 			quit: key.NewBinding(
 				key.WithKeys("q", "ctrl+c"),
@@ -65,9 +70,12 @@ func initialModel(words []string) model {
 				key.WithKeys("backspace"),
 			),
 		},
-		wordlist:   words,
-		words:      generateWords(words, 100),
-		typedWords: make([]string, 100),
+
+		wordlist: words,
+		words:    generateWords(words, 100),
+
+		typedWords:  make([]string, 100),
+		testStarted: false,
 	}
 
 	m.cursor.SetChar("a")
@@ -123,6 +131,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.renderedWords[m.currentWord] = m.renderCurrentWord()
 		default:
+			if !m.testStarted {
+				m.testStarted = true
+				m.testStartedAt = time.Now()
+			}
+
+			m.charactersTyped++
+
 			m.currentCharId += 1
 			if len(m.typedWords[m.currentWord]) > len(m.words[m.currentWord])+15 {
 				break
@@ -148,7 +163,7 @@ func (m model) View() string {
 		MarginTop(1).
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render("Type CLI")
+		Render("Type CLI", fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5))
 
 	content := lipgloss.NewStyle().
 		Width(m.width).
