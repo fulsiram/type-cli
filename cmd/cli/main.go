@@ -38,9 +38,11 @@ type model struct {
 
 	renderedWords []string
 
-	testStarted     bool
-	testStartedAt   time.Time
-	charactersTyped int
+	testStarted         bool
+	testStartedAt       time.Time
+	charactersTyped     int
+	correctCharsTyped   int
+	incorrectCharsTyped int
 }
 
 func generateWords(wordlist []string, n int) []string {
@@ -137,12 +139,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.testStartedAt = time.Now()
 			}
 
-			m.charactersTyped++
-
-			m.currentCharId += 1
 			if len(m.typedWords[m.currentWord]) > len(m.words[m.currentWord])+15 {
 				break
 			}
+
+			m.charactersTyped++
+			if len(m.typedWords[m.currentWord]) >= len(m.words[m.currentWord]) {
+				m.incorrectCharsTyped++
+			} else if msg.String() != string(m.words[m.currentWord][m.currentCharId]) {
+				m.incorrectCharsTyped++
+			} else {
+				m.correctCharsTyped++
+			}
+
+			m.currentCharId += 1
 			m.typedWords[m.currentWord] += msg.String()
 			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
 			m.renderedWords[m.currentWord] = m.renderCurrentWord()
@@ -164,7 +174,11 @@ func (m model) View() string {
 		MarginTop(1).
 		Width(m.width).
 		Align(lipgloss.Center).
-		Render("Type CLI", fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5))
+		Render(
+			"Type CLI",
+			fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5),
+			fmt.Sprintf("%.0f", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
+		)
 
 	content := lipgloss.NewStyle().
 		Width(m.width).
