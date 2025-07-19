@@ -65,15 +65,10 @@ func NewModel(words []string) model {
 		testStarted: false,
 	}
 
-	m.cursor.SetChar("a")
 	m.cursor.SetMode(cursor.CursorStatic)
 	m.cursor.Style = lipgloss.NewStyle().
 		Background(lipgloss.Color("#000000")).
 		Foreground(lipgloss.Color("#FFFFFF"))
-	// Bold(true)
-
-	// m.cursor.Style = lipgloss.NewStyle().
-	// 	Border(lipgloss.BlockBorder())
 
 	m.cursor.Focus()
 
