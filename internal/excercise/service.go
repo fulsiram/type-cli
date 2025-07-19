@@ -78,7 +78,7 @@ func (s *Service) TypeLetter(letter string) {
 
 	if len(curTypedWord) > len(curWord)+15 {
 		s.incorrect++
-		// Don't add a letter if the curTypedWord much longer
+		// Don't add a letter if curTypedWord is much longer
 		return
 	} else if len(curWord) >= len(curTypedWord) {
 		s.incorrect++
