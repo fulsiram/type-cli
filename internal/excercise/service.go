@@ -34,6 +34,14 @@ func (s *Service) Reset() {
 	s.TypedWords = make([]string, 500)
 }
 
+func (s *Service) Start() {
+	s.startedAt = time.Now()
+}
+
+func (s *Service) Finish() {
+	s.finishedAt = time.Now()
+}
+
 func (s Service) CurrentWord() string {
 	return s.Words[s.wordIdx]
 }
