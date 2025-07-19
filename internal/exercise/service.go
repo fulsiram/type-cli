@@ -1,11 +1,11 @@
-package excercise
+package exercise
 
 import (
 	"time"
 )
 
 type Service struct {
-	eg excerciseGenarator
+	eg exerciseGenarator
 
 	Words      []string
 	TypedWords []string
@@ -23,7 +23,7 @@ type Service struct {
 
 func NewService(words []string) Service {
 	service := Service{
-		eg:      excerciseGenarator{},
+		eg:      NewExerciseGenerator(words),
 		running: false,
 	}
 	service.Reset()
@@ -56,7 +56,7 @@ func (s Service) CurrentWord() string {
 }
 
 func (s Service) CurrentTypedWord() string {
-	return s.Words[s.wordIdx]
+	return s.TypedWords[s.wordIdx]
 }
 
 func (s Service) nextLetter() string {
@@ -90,7 +90,7 @@ func (s *Service) BackSpace() {
 	}
 
 	if len(curWord) > 0 {
-		s.Words[s.wordIdx] = curWord[:len(curWord)-1]
+		s.TypedWords[s.wordIdx] = curWord[:len(curWord)-1]
 	} else {
 		s.wordIdx--
 	}
@@ -109,7 +109,7 @@ func (s *Service) TypeLetter(letter string) {
 		s.incorrect++
 		// Don't add a letter if curTypedWord is much longer
 		return
-	} else if len(curWord) >= len(curTypedWord) {
+	} else if len(curTypedWord) >= len(curWord) {
 		s.incorrect++
 	} else if letter != s.nextLetter() {
 		s.incorrect++
