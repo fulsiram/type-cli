@@ -12,6 +12,7 @@ type Service struct {
 
 	wordIdx int
 
+	running    bool
 	startedAt  time.Time
 	finishedAt time.Time
 
@@ -22,7 +23,8 @@ type Service struct {
 
 func NewService(words []string) Service {
 	service := Service{
-		eg: excerciseGenarator{},
+		eg:      excerciseGenarator{},
+		running: false,
 	}
 	service.Reset()
 
@@ -30,16 +32,23 @@ func NewService(words []string) Service {
 }
 
 func (s *Service) Reset() {
+	s.running = false
 	s.Words = s.eg.Generate(500)
 	s.TypedWords = make([]string, 500)
 }
 
 func (s *Service) Start() {
+	s.running = true
 	s.startedAt = time.Now()
 }
 
 func (s *Service) Finish() {
+	s.running = false
 	s.finishedAt = time.Now()
+}
+
+func (s *Service) Running() bool {
+	return s.running
 }
 
 func (s Service) CurrentWord() string {
@@ -55,6 +64,10 @@ func (s Service) nextLetter() string {
 }
 
 func (s *Service) Space() {
+	if !s.Running() {
+		return
+	}
+
 	if len(s.CurrentTypedWord()) == 0 {
 		return
 	}
@@ -67,6 +80,10 @@ func (s *Service) Space() {
 }
 
 func (s *Service) BackSpace() {
+	if !s.Running() {
+		return
+	}
+
 	curWord := s.CurrentTypedWord()
 	if s.wordIdx == 0 && len(curWord) == 0 {
 		return
@@ -80,6 +97,10 @@ func (s *Service) BackSpace() {
 }
 
 func (s *Service) TypeLetter(letter string) {
+	if !s.Running() {
+		return
+	}
+
 	curWord, curTypedWord := s.CurrentWord(), s.CurrentTypedWord()
 
 	s.typed++
