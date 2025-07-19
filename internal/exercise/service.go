@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+type State int
+
+const (
+	Pending State = iota
+	Running
+	Finished
+)
+
 type Service struct {
 	eg exerciseGenerator
 
@@ -12,7 +20,7 @@ type Service struct {
 
 	wordIdx int
 
-	running    bool
+	state      State
 	startedAt  time.Time
 	finishedAt time.Time
 
@@ -23,8 +31,8 @@ type Service struct {
 
 func NewService(words []string) Service {
 	service := Service{
-		eg:      NewExerciseGenerator(words),
-		running: false,
+		eg:    NewExerciseGenerator(words),
+		state: State(Pending),
 	}
 	service.Reset()
 
@@ -32,23 +40,23 @@ func NewService(words []string) Service {
 }
 
 func (s *Service) Reset() {
-	s.running = false
+	s.state = State(Pending)
 	s.Words = s.eg.Generate(500)
 	s.TypedWords = make([]string, 500)
 }
 
 func (s *Service) Start() {
-	s.running = true
+	s.state = State(Running)
 	s.startedAt = time.Now()
 }
 
 func (s *Service) Finish() {
-	s.running = false
+	s.state = State(Finished)
 	s.finishedAt = time.Now()
 }
 
-func (s *Service) Running() bool {
-	return s.running
+func (s Service) State() State {
+	return s.state
 }
 
 func (s Service) CurrentWord() string {
@@ -64,7 +72,7 @@ func (s Service) nextLetter() string {
 }
 
 func (s *Service) Space() {
-	if !s.Running() {
+	if s.state != Running {
 		return
 	}
 
@@ -80,7 +88,7 @@ func (s *Service) Space() {
 }
 
 func (s *Service) BackSpace() {
-	if !s.Running() {
+	if s.state != Running {
 		return
 	}
 
@@ -97,7 +105,7 @@ func (s *Service) BackSpace() {
 }
 
 func (s *Service) TypeLetter(letter string) {
-	if !s.Running() {
+	if s.state != Running {
 		return
 	}
 
