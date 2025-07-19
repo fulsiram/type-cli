@@ -29,6 +29,16 @@ type Service struct {
 	incorrect int
 }
 
+type Result struct {
+	CharsTyped     int
+	CharsCorrect   int
+	CharsIncorrect int
+
+	StartedAt  time.Time
+	FinishedAt time.Time
+	Duration   time.Duration
+}
+
 func NewService(words []string) Service {
 	service := Service{
 		eg:    NewExerciseGenerator(words),
@@ -53,6 +63,23 @@ func (s *Service) Start() {
 func (s *Service) Finish() {
 	s.state = State(Finished)
 	s.finishedAt = time.Now()
+}
+
+func (s Service) Result() Result {
+	endTime := time.Now()
+	if s.Finished() {
+		endTime = s.finishedAt
+	}
+
+	return Result{
+		CharsTyped:     s.typed,
+		CharsCorrect:   s.correct,
+		CharsIncorrect: s.incorrect,
+
+		// StartedAt:  s.startedAt,
+		// FinishedAt: s.finishedAt,
+		Duration: endTime.Sub(s.startedAt),
+	}
 }
 
 func (s Service) State() State {

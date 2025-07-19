@@ -65,6 +65,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	result := m.exerciseService.Result()
+
 	header := lipgloss.NewStyle().
 		MarginTop(1).
 		Width(m.width).
@@ -72,8 +74,8 @@ func (m model) View() string {
 		Render(
 			"Type CLI",
 			fmt.Sprintf("%s", m.timer.View()),
-			// fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5),
-			// fmt.Sprintf("%.0f", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
+			fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result)),
+			fmt.Sprintf("%.0f", m.statsCalc.Accuracy(result)*100),
 		)
 
 	contentStyle := lipgloss.NewStyle().
@@ -92,9 +94,9 @@ func (m model) View() string {
 	} else {
 		content = contentStyle.Render(
 			"stats",
-			// fmt.Sprintf("%.2f wpm\n", float64(m.charactersTyped)/m.testFinishedAt.Sub(m.testStartedAt).Minutes()/5),
-			// fmt.Sprintf("%.0f%% accuracy\n", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
-			// fmt.Sprintf("%.0f sec", m.testFinishedAt.Sub(m.testStartedAt).Seconds()),
+			fmt.Sprintf("%.2f wpm\n", m.statsCalc.RawWpm(result)),
+			fmt.Sprintf("%.0f%% accuracy\n", m.statsCalc.Accuracy(result)*100),
+			fmt.Sprintf("%.0f sec", result.Duration.Seconds()),
 		)
 	}
 

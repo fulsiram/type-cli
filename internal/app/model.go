@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fulsiram/type-cli/internal/exercise"
+	"github.com/fulsiram/type-cli/internal/stats"
 )
 
 type keymap struct {
@@ -26,6 +27,7 @@ type model struct {
 	height int
 
 	exerciseService exercise.Service
+	statsCalc       stats.Calculator
 }
 
 func NewModel(words []string) model {
@@ -47,6 +49,7 @@ func NewModel(words []string) model {
 		},
 
 		exerciseService: exercise.NewService(words),
+		statsCalc:       stats.NewCalculator(),
 	}
 
 	m.cursor.SetMode(cursor.CursorStatic)
