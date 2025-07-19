@@ -5,7 +5,7 @@ import (
 )
 
 type Service struct {
-	eg exerciseGenarator
+	eg exerciseGenerator
 
 	Words      []string
 	TypedWords []string
