@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/timer"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fulsiram/type-cli/internal/exercise"
 )
 
 type keymap struct {
@@ -24,20 +25,7 @@ type model struct {
 	width  int
 	height int
 
-	wordlist      []string
-	words         []string
-	typedWords    []string
-	currentWord   int
-	currentCharId int
-
-	renderedWords []string
-
-	testStarted         bool
-	testStartedAt       time.Time
-	testFinishedAt      time.Time
-	charactersTyped     int
-	correctCharsTyped   int
-	incorrectCharsTyped int
+	exerciseService exercise.Service
 }
 
 func NewModel(words []string) model {
@@ -58,11 +46,7 @@ func NewModel(words []string) model {
 			),
 		},
 
-		wordlist: words,
-		words:    generateWords(words, 100),
-
-		typedWords:  make([]string, 100),
-		testStarted: false,
+		exerciseService: exercise.NewService(words),
 	}
 
 	m.cursor.SetMode(cursor.CursorStatic)
@@ -71,8 +55,6 @@ func NewModel(words []string) model {
 		Foreground(lipgloss.Color("#FFFFFF"))
 
 	m.cursor.Focus()
-
-	m.renderedWords = m.renderWords()
 
 	return m
 }

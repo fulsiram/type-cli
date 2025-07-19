@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"time"
+	"unicode"
 
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/key"
@@ -20,9 +20,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.timer, cmd = m.timer.Update(msg)
 		cmds = append(cmds, cmd)
 
-		if m.testStarted && m.timer.Timedout() {
-			m.testFinishedAt = time.Now()
-			m.testStarted = false
+		if m.exerciseService.Running() && m.timer.Timedout() {
+			m.exerciseService.Finish()
 		}
 	case tea.KeyMsg:
 		switch {
@@ -30,61 +29,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.nextWord):
-			if m.currentCharId == 0 {
-				return m, nil
-			}
-
-			m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
-			m.currentWord += 1
-			m.currentCharId = 0
-			m.charactersTyped++
+			m.exerciseService.Space()
 
 		case key.Matches(msg, m.keymap.backSpace):
-			if m.currentCharId == 0 {
-				if m.currentWord > 0 {
-					// m.typedWords = m.typedWords[:m.currentWord]
-					m.renderedWords[m.currentWord] = m.renderWord("", m.words[m.currentWord])
-					m.currentWord -= 1
-					m.currentCharId = len(m.typedWords[m.currentWord])
-				}
-				return m, nil
-			}
+			m.exerciseService.BackSpace()
 
-			m.currentCharId -= 1
-			m.typedWords[m.currentWord] = m.typedWords[m.currentWord][:m.currentCharId]
-			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
-			m.renderedWords[m.currentWord] = m.renderCurrentWord()
 		default:
-			if m.timer.Timedout() {
-				break
-			}
-
-			if !m.testStarted {
-				m.testStarted = true
-				m.testStartedAt = time.Now()
-				m.charactersTyped = 0
-				m.incorrectCharsTyped = 0
-				m.correctCharsTyped = 0
+			if m.exerciseService.Pending() {
 				cmds = append(cmds, m.timer.Start())
+				m.exerciseService.Start()
 			}
 
-			if len(m.typedWords[m.currentWord]) > len(m.words[m.currentWord])+15 {
+			if len(msg.Runes) == 0 {
 				break
 			}
 
-			m.charactersTyped++
-			if len(m.typedWords[m.currentWord]) >= len(m.words[m.currentWord]) {
-				m.incorrectCharsTyped++
-			} else if msg.String() != string(m.words[m.currentWord][m.currentCharId]) {
-				m.incorrectCharsTyped++
-			} else {
-				m.correctCharsTyped++
+			pKey := msg.Runes[0]
+
+			if !unicode.IsLetter(pKey) && !unicode.IsNumber(pKey) &&
+				!unicode.IsPunct(pKey) && !unicode.IsSymbol(pKey) {
+				break
 			}
 
-			m.currentCharId += 1
-			m.typedWords[m.currentWord] += msg.String()
-			// m.renderedWords[m.currentWord] = m.renderWord(m.typedWords[m.currentWord], m.words[m.currentWord])
-			m.renderedWords[m.currentWord] = m.renderCurrentWord()
+			m.exerciseService.TypeLetter(msg.String())
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -94,7 +61,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.cursor, cmd = m.cursor.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.renderedWords[m.currentWord] = m.renderCurrentWord()
 	return m, tea.Batch(cmds...)
 }
 
@@ -106,8 +72,8 @@ func (m model) View() string {
 		Render(
 			"Type CLI",
 			fmt.Sprintf("%s", m.timer.View()),
-			fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5),
-			fmt.Sprintf("%.0f", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
+			// fmt.Sprintf("%.2f wpm", float64(m.charactersTyped)/time.Since(m.testStartedAt).Minutes()/5),
+			// fmt.Sprintf("%.0f", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
 		)
 
 	contentStyle := lipgloss.NewStyle().
@@ -116,7 +82,7 @@ func (m model) View() string {
 		Align(lipgloss.Center, lipgloss.Center)
 
 	content := ""
-	if !m.timer.Timedout() {
+	if !m.exerciseService.Finished() {
 		content = contentStyle.Render(
 			lipgloss.NewStyle().
 				Width(60).
@@ -125,9 +91,10 @@ func (m model) View() string {
 		)
 	} else {
 		content = contentStyle.Render(
-			fmt.Sprintf("%.2f wpm\n", float64(m.charactersTyped)/m.testFinishedAt.Sub(m.testStartedAt).Minutes()/5),
-			fmt.Sprintf("%.0f%% accuracy\n", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
-			fmt.Sprintf("%.0f sec", m.testFinishedAt.Sub(m.testStartedAt).Seconds()),
+			"stats",
+			// fmt.Sprintf("%.2f wpm\n", float64(m.charactersTyped)/m.testFinishedAt.Sub(m.testStartedAt).Minutes()/5),
+			// fmt.Sprintf("%.0f%% accuracy\n", float32(m.correctCharsTyped)/float32(max(m.correctCharsTyped+m.incorrectCharsTyped, 1))*100),
+			// fmt.Sprintf("%.0f sec", m.testFinishedAt.Sub(m.testStartedAt).Seconds()),
 		)
 	}
 

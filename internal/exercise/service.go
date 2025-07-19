@@ -79,8 +79,24 @@ func (s Service) CurrentTypedWord() string {
 	return s.TypedWords[s.wordIdx]
 }
 
-func (s Service) nextLetter() string {
+func (s Service) NextLetter() string {
 	return string(s.CurrentWord()[len(s.CurrentTypedWord())])
+}
+
+func (s Service) WordIdx() int {
+	return s.wordIdx
+}
+
+func (s Service) Word(idx int) string {
+	return s.Words[idx]
+}
+
+func (s Service) TypedWord(idx int) string {
+	return s.TypedWords[idx]
+}
+
+func (s Service) IsCurrentWord(idx int) bool {
+	return s.wordIdx == idx
 }
 
 func (s *Service) Space() {
@@ -131,7 +147,7 @@ func (s *Service) TypeLetter(letter string) {
 		return
 	} else if len(curTypedWord) >= len(curWord) {
 		s.incorrect++
-	} else if letter != s.nextLetter() {
+	} else if letter != s.NextLetter() {
 		s.incorrect++
 	} else {
 		s.correct++
