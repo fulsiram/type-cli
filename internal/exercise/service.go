@@ -68,7 +68,7 @@ func (s Service) Running() bool {
 }
 
 func (s Service) Finished() bool {
-	return s.state == Pending
+	return s.state == Finished
 }
 
 func (s Service) CurrentWord() string {
