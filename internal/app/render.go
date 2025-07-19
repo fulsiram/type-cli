@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) RenderLines() string {
+func (m model) renderLines() string {
 	var lines [][]int
 	var line []int
 	lineLength := 0
