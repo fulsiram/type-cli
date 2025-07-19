@@ -59,6 +59,18 @@ func (s Service) State() State {
 	return s.state
 }
 
+func (s Service) Pending() bool {
+	return s.state == Pending
+}
+
+func (s Service) Running() bool {
+	return s.state == Running
+}
+
+func (s Service) Finished() bool {
+	return s.state == Pending
+}
+
 func (s Service) CurrentWord() string {
 	return s.Words[s.wordIdx]
 }
