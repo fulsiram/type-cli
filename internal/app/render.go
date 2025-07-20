@@ -10,7 +10,7 @@ func (m model) RenderLines() string {
 	var lines [][]int
 	var line []int
 	lineLength := 0
-	currentLine := 0
+	currentLine := -1
 	for i, word := range m.ExerciseService.Words {
 		wordLength := max(len(word), len(m.ExerciseService.TypedWord(i)))
 
@@ -18,6 +18,10 @@ func (m model) RenderLines() string {
 			lines = append(lines, line)
 			line = make([]int, 0)
 			lineLength = 0
+
+			if currentLine >= 0 && len(lines)-3 >= currentLine {
+				break
+			}
 		}
 
 		lineLength += wordLength + 1
@@ -29,10 +33,16 @@ func (m model) RenderLines() string {
 		line = append(line, i)
 	}
 
+	if len(line) > 0 {
+		lines = append(lines, line)
+	}
+
 	var shownLines [][]int
-	if currentLine == 0 {
+	if len(lines) <= 3 {
+		shownLines = lines
+	} else if currentLine == 0 {
 		shownLines = lines[:3]
-	} else if currentLine >= len(lines)-3 {
+	} else if currentLine >= len(lines)-2 {
 		shownLines = lines[len(lines)-3:]
 	} else {
 		shownLines = lines[currentLine-1 : currentLine+2]
