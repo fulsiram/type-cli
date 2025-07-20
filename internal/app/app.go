@@ -20,8 +20,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.timer, cmd = m.timer.Update(msg)
 		cmds = append(cmds, cmd)
 
-		if m.exerciseService.Running() && m.timer.Timedout() {
-			m.exerciseService.Finish()
+		if m.ExerciseService.Running() && m.timer.Timedout() {
+			m.ExerciseService.Finish()
 		}
 	case tea.KeyMsg:
 		switch {
@@ -29,15 +29,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.nextWord):
-			m.exerciseService.Space()
+			m.ExerciseService.Space()
 
 		case key.Matches(msg, m.keymap.backSpace):
-			m.exerciseService.BackSpace()
+			m.ExerciseService.BackSpace()
 
 		default:
-			if m.exerciseService.Pending() {
+			if m.ExerciseService.Pending() {
 				cmds = append(cmds, m.timer.Start())
-				m.exerciseService.Start()
+				m.ExerciseService.Start()
 			}
 
 			if len(msg.Runes) == 0 {
@@ -51,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.exerciseService.TypeLetter(msg.String())
+			m.ExerciseService.TypeLetter(msg.String())
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -65,7 +65,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	result := m.exerciseService.Result()
+	result := m.ExerciseService.Result()
 
 	header := lipgloss.NewStyle().
 		MarginTop(1).
@@ -84,12 +84,12 @@ func (m model) View() string {
 		Align(lipgloss.Center, lipgloss.Center)
 
 	content := ""
-	if !m.exerciseService.Finished() {
+	if !m.ExerciseService.Finished() {
 		content = contentStyle.Render(
 			lipgloss.NewStyle().
 				Width(60).
 				Align(lipgloss.Left).
-				Render(m.renderLines()),
+				Render(m.RenderLines()),
 		)
 	} else {
 		content = contentStyle.Render(

@@ -6,13 +6,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) renderLines() string {
+func (m model) RenderLines() string {
 	var lines [][]int
 	var line []int
 	lineLength := 0
 	currentLine := 0
-	for i, word := range m.exerciseService.Words {
-		wordLength := max(len(word), len(m.exerciseService.TypedWord(i)))
+	for i, word := range m.ExerciseService.Words {
+		wordLength := max(len(word), len(m.ExerciseService.TypedWord(i)))
 
 		if wordLength+lineLength+1 > 60 {
 			lines = append(lines, line)
@@ -22,7 +22,7 @@ func (m model) renderLines() string {
 
 		lineLength += wordLength + 1
 
-		if m.exerciseService.IsCurrentWord(i) {
+		if m.ExerciseService.IsCurrentWord(i) {
 			currentLine = len(lines)
 		}
 
@@ -42,15 +42,15 @@ func (m model) renderLines() string {
 	for _, line := range shownLines {
 		renderedLine := ""
 		for _, wordIdx := range line {
-			renderedLine += m.renderWord(wordIdx)
+			renderedLine += m.RenderWord(wordIdx)
 
-			if !m.exerciseService.IsCurrentWord(wordIdx) {
+			if !m.ExerciseService.IsCurrentWord(wordIdx) {
 				renderedLine += " "
 				continue
 			}
 
-			curWord := m.exerciseService.CurrentWord()
-			curTypedWord := m.exerciseService.CurrentTypedWord()
+			curWord := m.ExerciseService.CurrentWord()
+			curTypedWord := m.ExerciseService.CurrentTypedWord()
 
 			if len(curTypedWord) >= len(curWord) {
 				m.cursor.SetChar(" ")
@@ -65,7 +65,7 @@ func (m model) renderLines() string {
 	return strings.Join(renderedLines, "\n")
 }
 
-func (m model) renderWord(idx int) string {
+func (m model) RenderWord(idx int) string {
 	untypedStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#646669"))
 
@@ -75,8 +75,8 @@ func (m model) renderWord(idx int) string {
 	incorrectLetterStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#DB4B4C"))
 
-	currentWord := m.exerciseService.Word(idx)
-	typedWord := m.exerciseService.TypedWord(idx)
+	currentWord := m.ExerciseService.Word(idx)
+	typedWord := m.ExerciseService.TypedWord(idx)
 
 	renderedWord := ""
 	for i := range typedWord {
@@ -90,8 +90,8 @@ func (m model) renderWord(idx int) string {
 	}
 
 	if len(typedWord) < len(currentWord) {
-		if m.exerciseService.IsCurrentWord(idx) {
-			m.cursor.SetChar(m.exerciseService.NextLetter())
+		if m.ExerciseService.IsCurrentWord(idx) {
+			m.cursor.SetChar(m.ExerciseService.NextLetter())
 			renderedWord += m.cursor.View()
 			renderedWord += untypedStyle.Render(currentWord[len(typedWord)+1:])
 		} else {

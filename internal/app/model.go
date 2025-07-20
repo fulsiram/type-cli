@@ -26,7 +26,7 @@ type model struct {
 	width  int
 	height int
 
-	exerciseService exercise.Service
+	ExerciseService exercise.Service
 	statsCalc       stats.Calculator
 }
 
@@ -48,7 +48,7 @@ func NewModel(words []string) model {
 			),
 		},
 
-		exerciseService: exercise.NewService(words),
+		ExerciseService: exercise.NewService(words),
 		statsCalc:       stats.NewCalculator(),
 	}
 
