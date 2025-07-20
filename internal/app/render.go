@@ -6,11 +6,21 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) RenderLines() string {
+var untypedStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#646669"))
+
+var correctLetterStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#FFFFFF"))
+
+var incorrectLetterStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#DB4B4C"))
+
+func (m Model) RenderLines() string {
 	var lines [][]int
 	var line []int
 	lineLength := 0
 	currentLine := 0
+
 	for i, word := range m.ExerciseService.Words {
 		wordLength := max(len(word), len(m.ExerciseService.TypedWord(i)))
 
@@ -18,6 +28,10 @@ func (m model) RenderLines() string {
 			lines = append(lines, line)
 			line = make([]int, 0)
 			lineLength = 0
+
+			if len(line) > currentLine+3 {
+				break
+			}
 		}
 
 		lineLength += wordLength + 1
@@ -29,23 +43,22 @@ func (m model) RenderLines() string {
 		line = append(line, i)
 	}
 
-	var shownLines [][]int
-	if currentLine == 0 {
-		shownLines = lines[:3]
-	} else if currentLine >= len(lines)-3 {
-		shownLines = lines[len(lines)-3:]
-	} else {
-		shownLines = lines[currentLine-1 : currentLine+2]
+	if lineLength > 0 {
+		lines = append(lines, line)
 	}
+
+	start := max(0, min(currentLine-1, len(lines)-3))
+	end := min(len(lines), start+3)
+	shownLines := lines[start:end]
 
 	var renderedLines []string
 	for _, line := range shownLines {
-		renderedLine := ""
+		var sb strings.Builder
 		for _, wordIdx := range line {
-			renderedLine += m.RenderWord(wordIdx)
+			sb.WriteString(m.RenderWord(wordIdx))
 
 			if !m.ExerciseService.IsCurrentWord(wordIdx) {
-				renderedLine += " "
+				sb.WriteString(" ")
 				continue
 			}
 
@@ -54,50 +67,58 @@ func (m model) RenderLines() string {
 
 			if len(curTypedWord) >= len(curWord) {
 				m.cursor.SetChar(" ")
-				renderedLine += m.cursor.View()
+				sb.WriteString(m.cursor.View())
 			} else {
-				renderedLine += " "
+				sb.WriteString(" ")
 			}
 		}
-		renderedLines = append(renderedLines, renderedLine)
+		renderedLines = append(renderedLines, sb.String())
 	}
 
 	return strings.Join(renderedLines, "\n")
+
 }
 
-func (m model) RenderWord(idx int) string {
-	untypedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#646669"))
-
-	correctLetterStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFFF"))
-
-	incorrectLetterStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#DB4B4C"))
-
+func (m Model) RenderWord(idx int) string {
 	currentWord := m.ExerciseService.Word(idx)
 	typedWord := m.ExerciseService.TypedWord(idx)
 
-	renderedWord := ""
+	var sb strings.Builder
+
+	lastCharCorrect := false
+	var renderBuf strings.Builder
 	for i := range typedWord {
-		if i >= len(currentWord) {
-			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+		if i >= len(currentWord) || currentWord[i] != typedWord[i] {
+			if renderBuf.Len() > 0 && lastCharCorrect {
+				sb.WriteString(correctLetterStyle.Render(renderBuf.String()))
+				renderBuf.Reset()
+			}
+			lastCharCorrect = false
 		} else if currentWord[i] == typedWord[i] {
-			renderedWord += correctLetterStyle.Render(string(typedWord[i]))
-		} else {
-			renderedWord += incorrectLetterStyle.Render(string(typedWord[i]))
+			if renderBuf.Len() > 0 && !lastCharCorrect {
+				sb.WriteString(incorrectLetterStyle.Render(renderBuf.String()))
+				renderBuf.Reset()
+			}
+			lastCharCorrect = true
 		}
+		renderBuf.WriteByte(typedWord[i])
+	}
+
+	if lastCharCorrect {
+		sb.WriteString(correctLetterStyle.Render(renderBuf.String()))
+	} else {
+		sb.WriteString(incorrectLetterStyle.Render(renderBuf.String()))
 	}
 
 	if len(typedWord) < len(currentWord) {
 		if m.ExerciseService.IsCurrentWord(idx) {
 			m.cursor.SetChar(m.ExerciseService.NextLetter())
-			renderedWord += m.cursor.View()
-			renderedWord += untypedStyle.Render(currentWord[len(typedWord)+1:])
+			sb.WriteString(m.cursor.View())
+			sb.WriteString(untypedStyle.Render(currentWord[len(typedWord)+1:]))
 		} else {
-			renderedWord += untypedStyle.Render(currentWord[len(typedWord):])
+			sb.WriteString(untypedStyle.Render(currentWord[len(typedWord):]))
 		}
 	}
 
-	return renderedWord
+	return sb.String()
 }

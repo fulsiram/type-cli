@@ -3,6 +3,7 @@ package app_test
 import (
 	"testing"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fulsiram/type-cli/internal/app"
 )
 
@@ -43,5 +44,15 @@ func BenchmarkView(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		m.View()
+	}
+}
+
+func BenchmarkLipgloss(b *testing.B) {
+	style := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFFF"))
+
+	b.ResetTimer()
+	for b.Loop() {
+		style.Render("test")
 	}
 }

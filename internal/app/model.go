@@ -18,7 +18,7 @@ type keymap struct {
 	restart   key.Binding
 }
 
-type model struct {
+type Model struct {
 	timer    timer.Model
 	cursor   cursor.Model
 	keymap   keymap
@@ -31,8 +31,8 @@ type model struct {
 	statsCalc       stats.Calculator
 }
 
-func NewModel(words []string) model {
-	m := model{
+func NewModel(words []string) Model {
+	m := Model{
 		timer:  timer.NewWithInterval(10*time.Second, time.Second),
 		cursor: cursor.New(),
 

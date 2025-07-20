@@ -51,8 +51,8 @@ func NewService(words []string) Service {
 
 func (s *Service) Reset() {
 	s.state = State(Pending)
-	s.Words = s.eg.Generate(500)
-	s.TypedWords = make([]string, 500)
+	s.Words = s.eg.Generate(50)
+	s.TypedWords = make([]string, 50)
 	s.wordIdx = 0
 	s.correct = 0
 	s.incorrect = 0
