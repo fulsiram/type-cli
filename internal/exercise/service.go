@@ -53,6 +53,10 @@ func (s *Service) Reset() {
 	s.state = State(Pending)
 	s.Words = s.eg.Generate(500)
 	s.TypedWords = make([]string, 500)
+	s.wordIdx = 0
+	s.correct = 0
+	s.incorrect = 0
+	s.typed = 0
 }
 
 func (s *Service) Start() {

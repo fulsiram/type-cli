@@ -15,6 +15,7 @@ type keymap struct {
 	quit      key.Binding
 	nextWord  key.Binding
 	backSpace key.Binding
+	restart   key.Binding
 }
 
 type model struct {
@@ -43,6 +44,7 @@ func NewModel(words []string) model {
 			nextWord: key.NewBinding(
 				key.WithKeys(" "),
 			),
+			restart: key.NewBinding(key.WithKeys("enter")),
 			backSpace: key.NewBinding(
 				key.WithKeys("backspace"),
 			),
