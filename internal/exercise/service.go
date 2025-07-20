@@ -145,7 +145,11 @@ func (s *Service) Space() {
 		s.incorrect++
 	}
 
-	s.wordIdx++
+	if len(s.Words) > s.wordIdx+1 {
+		s.wordIdx++
+	} else {
+		s.Finish()
+	}
 }
 
 func (s *Service) BackSpace() {
@@ -187,4 +191,8 @@ func (s *Service) TypeLetter(letter string) {
 	}
 
 	s.TypedWords[s.wordIdx] += letter
+
+	if len(s.Words)-1 == s.wordIdx && s.CurrentWord() == s.CurrentTypedWord() {
+		s.Finish()
+	}
 }
