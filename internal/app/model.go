@@ -19,6 +19,7 @@ type keymap struct {
 }
 
 type model struct {
+	duration time.Duration
 	timer    timer.Model
 	cursor   cursor.Model
 	keymap   keymap
@@ -31,10 +32,11 @@ type model struct {
 	statsCalc       stats.Calculator
 }
 
-func NewModel(words []string) model {
+func NewModel(words []string, wordCount int, duration time.Duration) model {
 	m := model{
-		timer:  timer.NewWithInterval(10*time.Second, time.Second),
-		cursor: cursor.New(),
+		duration: duration,
+		timer:    timer.NewWithInterval(duration, time.Second),
+		cursor:   cursor.New(),
 
 		keymap: keymap{
 			quit: key.NewBinding(
@@ -50,7 +52,7 @@ func NewModel(words []string) model {
 			),
 		},
 
-		ExerciseService: exercise.NewService(words),
+		ExerciseService: exercise.NewService(words, wordCount),
 		statsCalc:       stats.NewCalculator(),
 	}
 

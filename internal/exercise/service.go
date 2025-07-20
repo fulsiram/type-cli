@@ -15,6 +15,7 @@ const (
 type Service struct {
 	eg exerciseGenerator
 
+	WordCount  int
 	Words      []string
 	TypedWords []string
 
@@ -39,10 +40,11 @@ type Result struct {
 	Duration   time.Duration
 }
 
-func NewService(words []string) Service {
+func NewService(words []string, wordCount int) Service {
 	service := Service{
-		eg:    NewExerciseGenerator(words),
-		state: State(Pending),
+		eg:        NewExerciseGenerator(words),
+		state:     State(Pending),
+		WordCount: wordCount,
 	}
 	service.Reset()
 
@@ -51,8 +53,8 @@ func NewService(words []string) Service {
 
 func (s *Service) Reset() {
 	s.state = State(Pending)
-	s.Words = s.eg.Generate(500)
-	s.TypedWords = make([]string, 500)
+	s.Words = s.eg.Generate(s.WordCount)
+	s.TypedWords = make([]string, s.WordCount)
 	s.wordIdx = 0
 	s.correct = 0
 	s.incorrect = 0

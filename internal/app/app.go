@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"time"
 	"unicode"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -35,7 +34,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keymap.restart):
 			cmds = append(cmds, m.timer.Stop())
-			m.timer.Timeout = 10 * time.Second
+			m.timer.Timeout = m.duration
 			m.ExerciseService.Reset()
 
 		case key.Matches(msg, m.keymap.backSpace):
