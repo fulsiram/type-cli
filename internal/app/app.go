@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -20,8 +20,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.timer, cmd = m.timer.Update(msg)
 		cmds = append(cmds, cmd)
 
-		if m.ExerciseService.Running() && m.timer.Timedout() {
-			m.ExerciseService.Finish()
+		if m.Exercise.Running() && m.timer.Timedout() {
+			m.Exercise.Finish()
 			cmds = append(cmds, m.timer.Stop())
 		}
 	case tea.KeyMsg:
@@ -30,20 +30,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.nextWord):
-			m.ExerciseService.Space()
+			m.Exercise.Space()
 
 		case key.Matches(msg, m.keymap.restart):
 			cmds = append(cmds, m.timer.Stop())
 			m.timer.Timeout = m.duration
-			m.ExerciseService.Reset()
+			m.Exercise.Reset()
 
 		case key.Matches(msg, m.keymap.backSpace):
-			m.ExerciseService.BackSpace()
+			m.Exercise.BackSpace()
 
 		default:
-			if m.ExerciseService.Pending() {
+			if m.Exercise.Pending() {
 				cmds = append(cmds, m.timer.Start())
-				m.ExerciseService.Start()
+				m.Exercise.Start()
 			}
 
 			if len(msg.Runes) == 0 {
@@ -57,7 +57,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.ExerciseService.TypeLetter(msg.String())
+			m.Exercise.TypeLetter(msg.String())
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -70,15 +70,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	result := m.ExerciseService.Result()
+func (m Model) View() string {
+	result := m.Exercise.Result()
 
 	header := lipgloss.NewStyle().
 		MarginTop(1).
 		Width(m.width).
 		Align(lipgloss.Center).
 		Render(
-			"Type CLI",
+			"Type CLI\n",
 			fmt.Sprintf("%s", m.timer.View()),
 			fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result)),
 			fmt.Sprintf("%.0f", m.statsCalc.Accuracy(result)*100),
@@ -90,7 +90,7 @@ func (m model) View() string {
 		Align(lipgloss.Center, lipgloss.Center)
 
 	content := ""
-	if !m.ExerciseService.Finished() {
+	if !m.Exercise.Finished() {
 		content = contentStyle.Render(
 			lipgloss.NewStyle().
 				Width(60).
@@ -109,6 +109,6 @@ func (m model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, content)
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(cursor.Blink)
 }

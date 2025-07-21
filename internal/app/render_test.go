@@ -15,7 +15,7 @@ func generateModel() app.Model {
 	}
 
 	m := app.NewModel(words)
-	m.ExerciseService.TypedWords = typedWords
+	m.Exercise.TypedWords = typedWords
 	return m
 }
 

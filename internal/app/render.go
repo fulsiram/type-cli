@@ -6,13 +6,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) RenderLines() string {
+func (m Model) RenderLines() string {
 	var lines [][]int
 	var line []int
 	lineLength := 0
 	currentLine := -1
-	for i, word := range m.ExerciseService.Words {
-		wordLength := max(len(word), len(m.ExerciseService.TypedWord(i)))
+	for i, word := range m.Exercise.Words {
+		wordLength := max(len(word), len(m.Exercise.TypedWord(i)))
 
 		if wordLength+lineLength+1 > 60 {
 			lines = append(lines, line)
@@ -26,7 +26,7 @@ func (m model) RenderLines() string {
 
 		lineLength += wordLength + 1
 
-		if m.ExerciseService.IsCurrentWord(i) {
+		if m.Exercise.IsCurrentWord(i) {
 			currentLine = len(lines)
 		}
 
@@ -54,13 +54,13 @@ func (m model) RenderLines() string {
 		for _, wordIdx := range line {
 			renderedLine += m.RenderWord(wordIdx)
 
-			if !m.ExerciseService.IsCurrentWord(wordIdx) {
+			if !m.Exercise.IsCurrentWord(wordIdx) {
 				renderedLine += " "
 				continue
 			}
 
-			curWord := m.ExerciseService.CurrentWord()
-			curTypedWord := m.ExerciseService.CurrentTypedWord()
+			curWord := m.Exercise.CurrentWord()
+			curTypedWord := m.Exercise.CurrentTypedWord()
 
 			if len(curTypedWord) >= len(curWord) {
 				m.cursor.SetChar(" ")
@@ -75,7 +75,7 @@ func (m model) RenderLines() string {
 	return strings.Join(renderedLines, "\n")
 }
 
-func (m model) RenderWord(idx int) string {
+func (m Model) RenderWord(idx int) string {
 	untypedStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#646669"))
 
@@ -85,8 +85,8 @@ func (m model) RenderWord(idx int) string {
 	incorrectLetterStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#DB4B4C"))
 
-	currentWord := m.ExerciseService.Word(idx)
-	typedWord := m.ExerciseService.TypedWord(idx)
+	currentWord := m.Exercise.Word(idx)
+	typedWord := m.Exercise.TypedWord(idx)
 
 	renderedWord := ""
 	for i := range typedWord {
@@ -100,8 +100,8 @@ func (m model) RenderWord(idx int) string {
 	}
 
 	if len(typedWord) < len(currentWord) {
-		if m.ExerciseService.IsCurrentWord(idx) {
-			m.cursor.SetChar(m.ExerciseService.NextLetter())
+		if m.Exercise.IsCurrentWord(idx) {
+			m.cursor.SetChar(m.Exercise.NextLetter())
 			renderedWord += m.cursor.View()
 			renderedWord += untypedStyle.Render(currentWord[len(typedWord)+1:])
 		} else {

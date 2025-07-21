@@ -18,7 +18,7 @@ type keymap struct {
 	restart   key.Binding
 }
 
-type model struct {
+type Model struct {
 	duration time.Duration
 	timer    timer.Model
 	cursor   cursor.Model
@@ -28,12 +28,12 @@ type model struct {
 	width  int
 	height int
 
-	ExerciseService exercise.Service
-	statsCalc       stats.Calculator
+	Exercise  exercise.Service
+	statsCalc stats.Calculator
 }
 
-func NewModel(words []string, wordCount int, duration time.Duration) model {
-	m := model{
+func NewModel(words []string, wordCount int, duration time.Duration) Model {
+	m := Model{
 		duration: duration,
 		timer:    timer.NewWithInterval(duration, time.Second),
 		cursor:   cursor.New(),
@@ -52,8 +52,8 @@ func NewModel(words []string, wordCount int, duration time.Duration) model {
 			),
 		},
 
-		ExerciseService: exercise.NewService(words, wordCount),
-		statsCalc:       stats.NewCalculator(),
+		Exercise:  exercise.NewService(words, wordCount),
+		statsCalc: stats.NewCalculator(),
 	}
 
 	m.cursor.SetMode(cursor.CursorStatic)
