@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/cursor"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/timer"
 	"github.com/charmbracelet/lipgloss"
@@ -23,6 +24,7 @@ type Model struct {
 	timer    timer.Model
 	cursor   cursor.Model
 	keymap   keymap
+	help     help.Model
 	quitting bool
 
 	width  int
@@ -46,11 +48,12 @@ func NewModel(words []string, wordCount int, duration time.Duration) Model {
 			nextWord: key.NewBinding(
 				key.WithKeys(" "),
 			),
-			restart: key.NewBinding(key.WithKeys("enter")),
+			restart: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "restart")),
 			backSpace: key.NewBinding(
 				key.WithKeys("backspace"),
 			),
 		},
+		help: help.New(),
 
 		Exercise:  exercise.NewService(words, wordCount),
 		statsCalc: stats.NewCalculator(),

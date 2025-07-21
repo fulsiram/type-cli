@@ -86,7 +86,7 @@ func (m Model) View() string {
 
 	contentStyle := lipgloss.NewStyle().
 		Width(m.width).
-		Height(m.height-2).
+		Height(m.height-5).
 		Align(lipgloss.Center, lipgloss.Center)
 
 	content := ""
@@ -106,7 +106,16 @@ func (m Model) View() string {
 		)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, content)
+	footer := lipgloss.NewStyle().
+		Width(m.width).
+		Align(lipgloss.Center).
+		MarginBottom(1).
+		Render(m.help.ShortHelpView([]key.Binding{
+			m.keymap.restart,
+		}))
+
+	// return lipgloss.JoinVertical(lipgloss.Top, header, content)
+	return lipgloss.JoinVertical(lipgloss.Top, header, content, footer)
 }
 
 func (m Model) Init() tea.Cmd {
