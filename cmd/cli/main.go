@@ -20,7 +20,7 @@ func main() {
 	var words []string
 	json.Unmarshal(file, &words)
 
-	p := tea.NewProgram(app.NewModel(words, 10, 60*time.Second))
+	p := tea.NewProgram(app.NewModel(words, 100, 15*time.Second))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)

@@ -34,7 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keymap.restart):
 			cmds = append(cmds, m.timer.Stop())
-			m.timer.Timeout = m.duration
+			m.timer = timer.New(m.duration)
 			m.Exercise.Reset()
 
 		case key.Matches(msg, m.keymap.backSpace):
