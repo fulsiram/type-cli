@@ -48,7 +48,10 @@ func NewModel(words []string, wordCount int, duration time.Duration) Model {
 			nextWord: key.NewBinding(
 				key.WithKeys(" "),
 			),
-			restart: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "restart")),
+			restart: key.NewBinding(
+				key.WithKeys("enter", "tab"),
+				key.WithHelp("tab", "restart"),
+			),
 			backSpace: key.NewBinding(
 				key.WithKeys("backspace"),
 			),
