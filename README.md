@@ -11,6 +11,11 @@ You can try it out immediately without installation:
 ssh type.fulsiram.dev
 ```
 
+## Statistics
+The app currently tracks:
+- **WPM** (Words Per Minute) - Raw typing speed
+- **Accuracy** - Percentage of correctly typed characters
+
 ## Installation
 
 ### Prerequisites
@@ -44,11 +49,6 @@ SSH server can be configured using environment variables:
 - `SSH_HOST` - Server host (default: localhost)
 - `SSH_PORT` - Server port (default: 31337)
 - `SSH_HOST_KEY` - Path to server SSH host key (default: .ssh/id_ed25519)
-
-## Statistics
-The application currently tracks:
-- **WPM** (Words Per Minute) - Raw typing speed
-- **Accuracy** - Percentage of correctly typed characters
 
 ## Contributing
 
