@@ -81,7 +81,7 @@ func (m Model) View() string {
 			"Type CLI\n",
 			fmt.Sprintf("%s", m.timer.View()),
 			fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result)),
-			fmt.Sprintf("%.0f", m.statsCalc.Accuracy(result)*100),
+			fmt.Sprintf("%.0f%%", m.statsCalc.Accuracy(result)*100),
 		)
 
 	contentStyle := lipgloss.NewStyle().
