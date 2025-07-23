@@ -86,12 +86,13 @@ func (m Model) View() string {
 	content := ""
 
 	if !m.Exercise.Finished() {
-		header = headerStyle.Render(
-			"Type CLI\n",
-			fmt.Sprintf("%s", m.timer.View()),
-			fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result)),
-			fmt.Sprintf("%.0f%%", m.statsCalc.Accuracy(result)*100),
-		)
+		headerText := "Type CLI\n"
+		if result.CharsTyped > 1 {
+			headerText += fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result))
+			headerText += fmt.Sprintf(" %.0f%%", m.statsCalc.Accuracy(result)*100)
+		}
+
+		header = headerStyle.Render(headerText)
 
 		content = contentStyle.Render(
 			lipgloss.NewStyle().
