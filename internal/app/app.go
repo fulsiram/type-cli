@@ -46,7 +46,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Exercise.Start()
 			}
 
-			if len(msg.Runes) == 0 {
+			if len(msg.String()) != 1 {
 				break
 			}
 
