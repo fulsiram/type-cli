@@ -73,24 +73,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	result := m.Exercise.Result()
 
-	header := lipgloss.NewStyle().
+	headerStyle := lipgloss.NewStyle().
 		MarginTop(1).
 		Width(m.width).
-		Align(lipgloss.Center).
-		Render(
+		Align(lipgloss.Center)
+	header := ""
+
+	contentStyle := lipgloss.NewStyle().
+		Width(m.width).
+		Height(m.height-5).
+		Align(lipgloss.Center, lipgloss.Center)
+	content := ""
+
+	if !m.Exercise.Finished() {
+		header = headerStyle.Render(
 			"Type CLI\n",
 			fmt.Sprintf("%s", m.timer.View()),
 			fmt.Sprintf("%.2f wpm", m.statsCalc.RawWpm(result)),
 			fmt.Sprintf("%.0f%%", m.statsCalc.Accuracy(result)*100),
 		)
 
-	contentStyle := lipgloss.NewStyle().
-		Width(m.width).
-		Height(m.height-5).
-		Align(lipgloss.Center, lipgloss.Center)
-
-	content := ""
-	if !m.Exercise.Finished() {
 		content = contentStyle.Render(
 			lipgloss.NewStyle().
 				Width(60).
@@ -98,6 +100,10 @@ func (m Model) View() string {
 				Render(m.RenderLines()),
 		)
 	} else {
+		header = headerStyle.Render(
+			"Type CLI\n",
+		)
+
 		content = contentStyle.Render(
 			"stats",
 			fmt.Sprintf("%.2f wpm\n", m.statsCalc.RawWpm(result)),
