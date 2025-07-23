@@ -46,10 +46,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Exercise.Start()
 			}
 
-			if len(msg.String()) != 1 {
-				break
-			}
-
 			pKey := msg.Runes[0]
 
 			if !unicode.IsLetter(pKey) && !unicode.IsNumber(pKey) &&
@@ -57,7 +53,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			m.Exercise.TypeLetter(msg.String())
+			m.Exercise.TypeLetter(string(pKey))
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
